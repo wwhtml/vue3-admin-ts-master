@@ -1,7 +1,7 @@
 
 export function checkPhone(value:string):boolean {
-  let regPhong = /^1[3456789]\d{9}$/; //1开头，第二个数值是3456789之一，剩余9位是数值
-  return regPhong.test(value);
+  let regPhone = /^1[3456789]\d{9}$/; //1开头，第二个数值是3456789之一，剩余9位是数值
+  return regPhone.test(value);
 }
 
 

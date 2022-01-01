@@ -1,7 +1,7 @@
 <template>
   <div class="account">
     <div class="form-wrap">
-      <a-form layout="vertical" :model="account_form" :rules="rules">
+      <a-form layout="vertical"  :model="account_form" :rules="rules">
         <a-form-item label="用户名" name="username">
           <a-input v-model:value="account_form.username" />
         </a-form-item>
@@ -30,9 +30,10 @@
                 block
                 type="primary"
                 :loading="button_loading"
-                @click="enterIconLoading"
+                :disabled="button_disabled"
+                @click="getCode"
               >
-                延迟1s
+                {{ button_text }}
               </a-button>
             </a-col>
           </a-row>
@@ -52,15 +53,26 @@
   </div>
 </template>
 
-
 <script lang="ts">
 import { defineComponent, onMounted, reactive, ref, toRefs } from "vue";
-import Captcha from "../../components/Captcha/index.vue";
+import Captcha from "@/components/Captcha/index.vue";
+import { message } from "ant-design-vue";
+
 import {
   checkPhone,
   checkPassword,
   checkCode as code,
-} from "../../utils/Verification";
+} from "@/utils/Verification";
+
+//interface用来标识变量的类型
+interface CodeButton {
+  button_text: string;
+  button_loading: boolean;
+  sec: number;
+  button_disabled: boolean;
+  timer: any;
+}
+
 export default defineComponent({
   name: "Register",
   components: {
@@ -87,7 +99,7 @@ export default defineComponent({
     };
 
     //密码验证
-    const validatePass = async (_rule: any, value: string): Promise<void> => {
+    const validatePass = async (_rule: any, value: string) => {
       if (!value) {
         return Promise.reject("请输入密码");
       }
@@ -99,7 +111,7 @@ export default defineComponent({
     };
 
     //再次输入密码
-    const validatePass2 = async (_rule: any, value: string): Promise<void> => {
+    const validatePass2 = async (_rule: any, value: string) => {
       const pass = formConfig.account_form.password;
 
       if (!value) {
@@ -133,8 +145,6 @@ export default defineComponent({
         passwords: "",
         code: "",
       },
-      aa: "11",
-      bb: "sss",
       rules: {
         username: [
           {
@@ -159,16 +169,43 @@ export default defineComponent({
       },
     });
 
-    const dataItem = reactive<any>({
+    const dataItem = reactive<CodeButton>({
+      button_text: "发送验证码",
       button_loading: false,
+      sec: 0,
+      button_disabled: false,
+      timer: null,
     });
 
-    const enterIconLoading = () => {
-      dataItem.button_loading = { delay: 1000 };
+    //点击发送验证啊
+    const getCode = () => {
+      dataItem.sec = 10;
+      if (!formConfig.account_form.username) {
+        message.error("用户名不能为空");
+        return false;
+      }
+      dataItem.button_loading = true;
+      dataItem.button_disabled = true;
 
-      setTimeout(() => {
+      dataItem.button_text = `发送中`;
+
+      countDown();
+    };
+
+    const countDown = () => {
+      //倒计时
+      dataItem.timer && clearInterval(dataItem.timer);
+      dataItem.timer = setInterval(() => {
         dataItem.button_loading = false;
-      }, 6000);
+        const s = dataItem.sec--;
+        dataItem.button_text = `${s}s`;
+        if (s <= 0) {
+          clearInterval(dataItem.timer);
+          dataItem.button_disabled = false;
+
+          dataItem.button_text = `重新获取`;
+        }
+      }, 1000);
     };
 
     //toRefs：将响应式对象转换为普通对象
@@ -181,15 +218,13 @@ export default defineComponent({
       ...form,
       ...data,
 
-      enterIconLoading,
+      getCode,
     };
   },
 });
 </script>
 
-
-
-<style lang="scss" >
+<style lang="scss">
 .account {
   width: 100vw;
   height: 100vh;

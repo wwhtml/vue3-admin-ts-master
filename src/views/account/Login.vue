@@ -79,6 +79,7 @@ export default defineComponent({
       account_form: {
         username: "",
         password: "",
+        passwords: "",
       },
       rules: {
         username: [
